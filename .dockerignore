@@ -1,0 +1,7 @@
+**/node_modules
+**/dist
+frontend/.angular
+backend/data
+.git
+.github
+*.md

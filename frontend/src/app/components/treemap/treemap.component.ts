@@ -227,7 +227,7 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       .attr('pointer-events', 'none')
       .text('✓');
 
-    // Deadline warning badge (top-center, only when not done)
+    // Deadline warning badge (top-center, only when not done and deadline < 3 days)
     node.filter((d) => {
         const dl = d.todo.deadline;
         return !!dl && !d.todo.done && new Date(dl).getTime() - now < threeDays;
@@ -240,6 +240,20 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       .attr('fill', '#fbbf24')
       .attr('pointer-events', 'none')
       .text('⚠');
+
+    // Deadline calendar icon (top-center, only when not done and deadline >= 3 days away)
+    node.filter((d) => {
+        const dl = d.todo.deadline;
+        return !!dl && !d.todo.done && new Date(dl).getTime() - now >= threeDays;
+      })
+      .append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .attr('y', (d) => -d.r * 0.52)
+      .attr('font-size', (d) => Math.min(16, Math.max(10, d.r * 0.32)))
+      .attr('fill', 'rgba(255,255,255,0.75)')
+      .attr('pointer-events', 'none')
+      .text('🗓');
 
     // ── Helper: render title label (normal or hover state) ───────────
     const HOVER_SCALE = 1.85;
