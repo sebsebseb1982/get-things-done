@@ -4,7 +4,9 @@ import {
   signal,
   inject,
   WritableSignal,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { TodoService } from './services/todo.service';
 import { Todo, CreateTodoDto, UpdateTodoDto } from './models/todo.model';
@@ -20,6 +22,7 @@ import { TodoFormComponent } from './components/todo-form/todo-form.component';
 })
 export class App implements OnInit {
   private todoService = inject(TodoService);
+  private destroyRef = inject(DestroyRef);
 
   todos: WritableSignal<Todo[]> = signal([]);
   showDone: WritableSignal<boolean> = signal(false);
@@ -36,6 +39,9 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     this.loadTodos();
+    this.todoService.reload$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadTodos());
   }
 
   loadTodos(): void {

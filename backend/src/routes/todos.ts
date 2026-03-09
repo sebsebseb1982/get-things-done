@@ -2,6 +2,10 @@ import { Router, Request, Response } from 'express';
 import * as todoService from '../services/todo.service';
 import { CreateTodoDto, UpdateTodoDto } from '../models/todo.model';
 
+type BroadcastFn = (event: string, payload: unknown) => void;
+let broadcastFn: BroadcastFn | null = null;
+export function setBroadcast(fn: BroadcastFn): void { broadcastFn = fn; }
+
 const router = Router();
 
 // GET /api/todos?done=false|true
@@ -39,6 +43,7 @@ router.post('/', (req: Request, res: Response) => {
     return;
   }
   const todo = todoService.createTodo({ title: title.trim(), description, effort, priority, deadline });
+  broadcastFn?.('todos:changed', { action: 'created', todo });
   res.status(201).json(todo);
 });
 
@@ -50,6 +55,7 @@ router.put('/:id', (req: Request, res: Response) => {
     res.status(404).json({ error: 'Todo not found' });
     return;
   }
+  broadcastFn?.('todos:changed', { action: 'updated', todo });
   res.json(todo);
 });
 
@@ -61,16 +67,19 @@ router.patch('/:id', (req: Request, res: Response) => {
     res.status(404).json({ error: 'Todo not found' });
     return;
   }
+  broadcastFn?.('todos:changed', { action: 'updated', todo });
   res.json(todo);
 });
 
 // DELETE /api/todos/:id
 router.delete('/:id', (req: Request, res: Response) => {
-  const deleted = todoService.deleteTodo(req.params['id'] as string);
+  const id = req.params['id'] as string;
+  const deleted = todoService.deleteTodo(id);
   if (!deleted) {
     res.status(404).json({ error: 'Todo not found' });
     return;
   }
+  broadcastFn?.('todos:changed', { action: 'deleted', id });
   res.status(204).send();
 });
 
