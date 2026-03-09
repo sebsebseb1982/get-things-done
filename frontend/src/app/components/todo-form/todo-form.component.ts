@@ -134,6 +134,12 @@ import { Todo, CreateTodoDto, UpdateTodoDto } from '../../models/todo.model';
             <button
               *ngIf="todo"
               type="button"
+              class="px-4 py-2 text-sm text-indigo-400 hover:text-white hover:bg-indigo-900 rounded-lg transition-colors"
+              (click)="onDuplicate()"
+            >Duplicate</button>
+            <button
+              *ngIf="todo"
+              type="button"
               class="px-4 py-2 text-sm text-red-400 hover:text-white hover:bg-red-900 rounded-lg transition-colors"
               (click)="onDelete()"
             >Delete</button>
@@ -153,6 +159,7 @@ export class TodoFormComponent implements OnInit {
   @Output() close = new EventEmitter<void>();
   @Output() saved = new EventEmitter<{ dto: CreateTodoDto | UpdateTodoDto; id?: string }>();
   @Output() deleted = new EventEmitter<string>();
+  @Output() duplicated = new EventEmitter<Todo>();
 
   private fb = inject(FormBuilder);
   form!: FormGroup;
@@ -196,6 +203,10 @@ export class TodoFormComponent implements OnInit {
 
   onDelete(): void {
     if (this.todo) this.deleted.emit(this.todo.id);
+  }
+
+  onDuplicate(): void {
+    if (this.todo) this.duplicated.emit(this.todo);
   }
 
   onBackdropClick(event: MouseEvent): void {

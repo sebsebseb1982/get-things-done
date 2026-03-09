@@ -99,6 +99,23 @@ export class App implements OnInit {
     });
   }
 
+  onDuplicated(todo: Todo): void {
+    const dto: CreateTodoDto = {
+      title: todo.title,
+      description: todo.description,
+      effort: todo.effort,
+      priority: todo.priority,
+      deadline: todo.deadline,
+    };
+    this.todoService.create(dto).subscribe({
+      next: (created) => {
+        this.todos.update((list) => [...list, created]);
+        this.closeForm();
+      },
+      error: () => this.showError('Failed to duplicate task.'),
+    });
+  }
+
   dismissError(): void {
     this.errorMsg.set(null);
   }
