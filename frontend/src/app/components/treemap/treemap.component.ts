@@ -38,8 +38,6 @@ interface BubbleDatum {
   styles: [`
     :host { display: block; width: 100%; height: 100%; }
     :host ::ng-deep .bubble { cursor: pointer; }
-    :host ::ng-deep .bubble circle { transition: filter 0.15s; }
-    :host ::ng-deep .bubble:hover circle { filter: brightness(1.15); }
   `],
   imports: [],
 })
@@ -127,8 +125,8 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
     // Radius scale: effort 1 → small, effort 5 → large
     const rScale = d3.scaleSqrt().domain([1, 5]).range([
-      Math.min(width, height) * 0.045,
-      Math.min(width, height) * 0.13,
+      Math.min(width, height) * 0.0675,
+      Math.min(width, height) * 0.143,
     ]);
 
     // Score: high priority + low effort + near deadline = top of screen
@@ -313,11 +311,11 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
       } else {
         // Normal state: truncated, original logic
-        const fontSize = Math.min(13, Math.max(9, d.r / 3.2));
+        const fontSize = Math.min(13, Math.max(7, d.r / 5.5));
         const words = d.todo.title.split(' ');
         const maxW = d.r * 1.6;
-        const hasEP = d.r > 38;
-        const effortCap: Record<number, number> = { 1: 8, 2: 11, 3: 14, 4: 17, 5: 20 };
+        const hasEP = d.r > 50;
+        const effortCap: Record<number, number> = { 1: 16, 2: 16, 3: 18, 4: 22, 5: 24 };
         const charsPerLine = Math.min(
           effortCap[d.todo.effort] ?? 20,
           Math.max(3, Math.floor(maxW / (fontSize * 0.6)))
@@ -333,11 +331,6 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
           .attr('font-weight', '600')
           .attr('fill', 'white')
           .attr('pointer-events', 'none');
-
-        if (d.todo.effort === 1) {
-          textEl.attr('y', d.r * 0.08).text(truncate(d.todo.title, charsPerLine));
-          return;
-        }
 
         let line1 = '', line2 = '', line1Full = false;
         words.forEach(w => {
@@ -384,6 +377,8 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
         const { x, y } = clampPos(d);
         g.transition('hover').duration(180)
           .attr('transform', `translate(${x},${y}) scale(${HOVER_SCALE})`);
+        g.selectAll('circle').transition('hover').duration(180)
+          .style('filter', 'brightness(1.15)');
         renderLabel(g, d, true);
       })
       .on('mouseleave', (event, d) => {
@@ -392,6 +387,8 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
         const { x, y } = clampPos(d);
         g.transition('hover').duration(180)
           .attr('transform', `translate(${x},${y}) scale(1)`);
+        g.selectAll('circle').transition('hover').duration(180)
+          .style('filter', null);
         renderLabel(g, d, false);
       });
 
