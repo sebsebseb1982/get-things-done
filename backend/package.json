@@ -1,6 +1,6 @@
 {
   "name": "get-things-done-backend",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
