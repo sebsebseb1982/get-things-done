@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { TodoService } from './services/todo.service';
 import { Todo, CreateTodoDto, UpdateTodoDto } from './models/todo.model';
+import { version } from '../../../package.json';
 import { TreemapComponent } from './components/treemap/treemap.component';
 import { TodoFormComponent } from './components/todo-form/todo-form.component';
 
@@ -21,6 +22,8 @@ import { TodoFormComponent } from './components/todo-form/todo-form.component';
   styleUrl: './app.css',
 })
 export class App implements OnInit {
+  readonly appVersion = version;
+
   private todoService = inject(TodoService);
   private destroyRef = inject(DestroyRef);
 
