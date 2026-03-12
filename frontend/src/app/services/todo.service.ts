@@ -82,4 +82,16 @@ export class TodoService {
   delete(id: string): Observable<void> {
     return this.trackMutation(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }
+
+  purgeDone(): Observable<{ deleted: number }> {
+    return this.trackMutation(this.http.delete<{ deleted: number }>(`${this.baseUrl}/done`));
+  }
+
+  clearAll(): Observable<{ deleted: number }> {
+    return this.trackMutation(this.http.delete<{ deleted: number }>(this.baseUrl));
+  }
+
+  deleteAccount(): Observable<void> {
+    return this.trackMutation(this.http.delete<void>(`/api/${this.account}`));
+  }
 }

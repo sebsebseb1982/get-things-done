@@ -102,3 +102,25 @@ export function deleteTodo(account: string, id: string): boolean {
   writeData(account, todos);
   return true;
 }
+
+export function purgeDone(account: string): number {
+  const todos = readData(account);
+  const remaining = todos.filter((t) => !t.done);
+  const count = todos.length - remaining.length;
+  writeData(account, remaining);
+  return count;
+}
+
+export function clearAll(account: string): number {
+  const todos = readData(account);
+  const count = todos.length;
+  writeData(account, []);
+  return count;
+}
+
+export function deleteAccount(account: string): boolean {
+  const dir = path.join(DATA_DIR, account);
+  if (!fs.existsSync(dir)) return false;
+  fs.rmSync(dir, { recursive: true, force: true });
+  return true;
+}

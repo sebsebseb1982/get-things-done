@@ -88,6 +88,30 @@ router.patch('/:id', (req: Request, res: Response) => {
   res.json(todo);
 });
 
+// DELETE /api/:account/todos/done — purge all done todos
+router.delete('/done', (req: Request, res: Response) => {
+  const account = getAccount(req);
+  if (!todoService.accountExists(account)) {
+    res.status(404).json({ error: 'Account not found' });
+    return;
+  }
+  const count = todoService.purgeDone(account);
+  broadcastFn?.('todos:changed', { action: 'purged_done', count });
+  res.json({ deleted: count });
+});
+
+// DELETE /api/:account/todos — clear all todos
+router.delete('/', (req: Request, res: Response) => {
+  const account = getAccount(req);
+  if (!todoService.accountExists(account)) {
+    res.status(404).json({ error: 'Account not found' });
+    return;
+  }
+  const count = todoService.clearAll(account);
+  broadcastFn?.('todos:changed', { action: 'cleared', count });
+  res.json({ deleted: count });
+});
+
 // DELETE /api/:account/todos/:id
 router.delete('/:id', (req: Request, res: Response) => {
   const account = getAccount(req);

@@ -33,6 +33,21 @@ app.post('/api/accounts', (req, res) => {
   res.status(201).json({ name: account });
 });
 
+// DELETE /api/:account — delete account and all its data
+app.delete('/api/:account', (req, res) => {
+  const account = req.params['account'] as string;
+  if (!/^[a-zA-Z0-9_-]+$/.test(account)) {
+    res.status(400).json({ error: 'Invalid account name' });
+    return;
+  }
+  const deleted = todoService.deleteAccount(account);
+  if (!deleted) {
+    res.status(404).json({ error: 'Account not found' });
+    return;
+  }
+  res.status(204).send();
+});
+
 // --- Todo endpoints (scoped by account) ---
 app.use('/api/:account/todos', todosRouter);
 
