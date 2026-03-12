@@ -69,6 +69,7 @@ export function createTodo(account: string, dto: CreateTodoDto): Todo {
     effort: dto.effort,
     priority: dto.priority,
     deadline: dto.deadline ?? null,
+    category: dto.category ?? null,
     done: false,
     createdAt: now,
     updatedAt: now,

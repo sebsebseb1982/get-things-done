@@ -50,10 +50,11 @@
       "description": "",
       "effort": 3,
       "priority": 3,
-      "deadline": "2026-03-26T00:00:00.000Z",
-      "done": true,
+      "deadline": null,
+      "done": false,
       "createdAt": "2026-03-09T21:39:09.226Z",
-      "updatedAt": "2026-03-12T16:33:45.032Z"
+      "updatedAt": "2026-03-12T20:41:10.213Z",
+      "category": "courses"
     },
     {
       "id": "17131065-840b-4007-8c57-fbe4fa7faff2",
@@ -86,7 +87,8 @@
       "deadline": null,
       "done": false,
       "createdAt": "2026-03-11T20:46:53.822Z",
-      "updatedAt": "2026-03-11T20:46:53.822Z"
+      "updatedAt": "2026-03-12T20:48:57.037Z",
+      "category": "courses"
     },
     {
       "id": "ff3077ea-960e-42f4-95c0-406792ec994c",
@@ -95,9 +97,10 @@
       "effort": 4,
       "priority": 3,
       "deadline": null,
-      "done": true,
+      "done": false,
       "createdAt": "2026-03-11T20:47:01.864Z",
-      "updatedAt": "2026-03-12T16:33:51.481Z"
+      "updatedAt": "2026-03-12T20:44:57.670Z",
+      "category": "courses"
     },
     {
       "id": "0001535c-cb20-444f-a94b-75114bb80a0c",
@@ -108,7 +111,8 @@
       "deadline": null,
       "done": false,
       "createdAt": "2026-03-11T20:49:02.049Z",
-      "updatedAt": "2026-03-11T20:49:02.049Z"
+      "updatedAt": "2026-03-12T20:47:21.739Z",
+      "category": "maison"
     },
     {
       "id": "3bfa0d15-a1f2-44f1-ac07-95ff1aaafa48",
@@ -493,7 +497,8 @@
       "deadline": null,
       "done": false,
       "createdAt": "2026-03-12T12:58:42.011Z",
-      "updatedAt": "2026-03-12T12:58:42.011Z"
+      "updatedAt": "2026-03-12T20:44:44.524Z",
+      "category": "voiture"
     },
     {
       "id": "73d2e723-24a8-467b-a9ba-fe3b0fba8d9e",

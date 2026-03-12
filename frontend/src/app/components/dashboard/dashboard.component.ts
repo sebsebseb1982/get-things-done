@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TodoService } from '../../services/todo.service';
-import { Todo, CreateTodoDto, UpdateTodoDto } from '../../models/todo.model';
+import { Todo, CreateTodoDto, UpdateTodoDto, TODO_CATEGORIES } from '../../models/todo.model';
 import { version } from '../../../../package.json';
 import { BubbleChartComponent } from '../bubble-chart/bubble-chart.component';
 import { TodoFormComponent } from '../todo-form/todo-form.component';
@@ -88,10 +88,36 @@ import { TodoFormComponent } from '../todo-form/todo-form.component';
         Size = effort &nbsp;·&nbsp; Color = priority &nbsp;·&nbsp; Center = urgent · Edge = low priority &nbsp;·&nbsp; ⚠ = deadline &lt; 3 days
       </div>
 
+      <!-- Category filter bar -->
+      @if (availableCategories().length > 0) {
+        <div class="px-4 py-1.5 bg-gray-900/30 border-b border-gray-800/50 shrink-0 flex items-center gap-2 overflow-x-auto">
+          <span class="text-xs text-gray-500 shrink-0">Filtrer&nbsp;:</span>
+          @for (cat of availableCategories(); track cat.id) {
+            <button
+              class="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border transition-colors shrink-0"
+              [class]="activeCategories().includes(cat.id)
+                ? 'bg-blue-600 border-blue-500 text-white'
+                : 'bg-gray-800/80 border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'"
+              (click)="toggleCategoryFilter(cat.id)"
+            >
+              <span>{{ cat.icon }}</span>
+              <span class="hidden sm:inline ml-0.5">{{ cat.label }}</span>
+            </button>
+          }
+          @if (activeCategories().length > 0) {
+            <button
+              class="ml-1 flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-white bg-gray-800/50 rounded-full border border-gray-700 transition-colors shrink-0"
+              (click)="activeCategories.set([])"
+            >✕ Clear</button>
+          }
+        </div>
+      }
+
       <!-- Bubble chart area -->
       <main class="relative flex-1 overflow-hidden p-3">
         <app-bubble-chart
           [todos]="visibleTodos"
+          [dimmedIds]="dimmedIds()"
           (editTodo)="openEditForm($event)"
           (toggleDone)="onToggleDone($event)"
           class="block w-full h-full"
@@ -161,6 +187,7 @@ import { TodoFormComponent } from '../todo-form/todo-form.component';
 })
 export class DashboardComponent implements OnInit {
   readonly appVersion = version;
+  readonly CATEGORIES = TODO_CATEGORIES;
 
   private todoService = inject(TodoService);
   private destroyRef = inject(DestroyRef);
@@ -171,9 +198,25 @@ export class DashboardComponent implements OnInit {
   todos: WritableSignal<Todo[]> = signal([]);
   showDone: WritableSignal<boolean> = signal(false);
   settingsOpen: WritableSignal<boolean> = signal(false);
+  activeCategories: WritableSignal<string[]> = signal([]);
 
   todoCount = computed(() => this.todos().filter((t) => !t.done).length);
   doneCount = computed(() => this.todos().filter((t) => t.done).length);
+
+  availableCategories = computed(() => {
+    const usedCats = new Set(this.todos().map(t => t.category).filter(Boolean));
+    return TODO_CATEGORIES.filter(c => usedCats.has(c.id));
+  });
+
+  dimmedIds = computed((): Set<string> => {
+    const active = this.activeCategories();
+    if (active.length === 0) return new Set<string>();
+    return new Set(
+      this.todos()
+        .filter(t => !t.category || !active.includes(t.category))
+        .map(t => t.id)
+    );
+  });
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -218,6 +261,12 @@ export class DashboardComponent implements OnInit {
   openNewForm(): void {
     this.editingTodo = null;
     this.formOpen = true;
+  }
+
+  toggleCategoryFilter(catId: string): void {
+    this.activeCategories.update(cats =>
+      cats.includes(catId) ? cats.filter(c => c !== catId) : [...cats, catId]
+    );
   }
 
   openEditForm(todo: Todo): void {
@@ -276,6 +325,7 @@ export class DashboardComponent implements OnInit {
       effort: todo.effort,
       priority: todo.priority,
       deadline: todo.deadline,
+      category: todo.category,
     };
     this.todoService.create(dto).subscribe({
       next: (created) => {

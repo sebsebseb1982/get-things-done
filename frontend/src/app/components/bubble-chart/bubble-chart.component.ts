@@ -12,7 +12,7 @@ import {
   inject,
 } from '@angular/core';
 import * as d3 from 'd3';
-import { Todo } from '../../models/todo.model';
+import { Todo, TODO_CATEGORIES } from '../../models/todo.model';
 
 interface BubbleDatum {
   todo: Todo;
@@ -43,6 +43,7 @@ interface BubbleDatum {
 })
 export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() todos: Todo[] = [];
+  @Input() dimmedIds: Set<string> = new Set();
   @Output() editTodo = new EventEmitter<Todo>();
   @Output() toggleDone = new EventEmitter<Todo>();
 
@@ -62,7 +63,7 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['todos']) {
+    if (changes['todos'] && !changes['dimmedIds']) {
       const prev = changes['todos'].previousValue as Todo[] | undefined;
       const curr = changes['todos'].currentValue as Todo[];
       // Skip re-render when the data hasn't actually changed
@@ -196,6 +197,12 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
     grad.append('stop').attr('offset', '0%').attr('stop-color', '#1f2937').attr('stop-opacity', 0.6);
     grad.append('stop').attr('offset', '100%').attr('stop-color', '#111827').attr('stop-opacity', 0.9);
 
+    // Grayscale filter for category watermark icons
+    const grayFilter = defs.append('filter').attr('id', 'cat-gray');
+    grayFilter.append('feColorMatrix')
+      .attr('type', 'saturate')
+      .attr('values', '0');
+
     // Glow filter for medal halos
     const glowFilter = defs.append('filter')
       .attr('id', 'medal-glow')
@@ -305,6 +312,18 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
       .append('circle')
       .attr('r', (d) => d.r)
       .attr('fill', 'rgba(0,0,0,0.5)');
+
+    // ── Category watermark (large monochrome icon centered behind text) ──
+    node.filter((d) => !!d.todo.category)
+      .append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .attr('y', (d) => d.r * 0.12)
+      .attr('font-size', (d) => d.r * 1.05)
+      .attr('opacity', 0.13)
+      .attr('filter', 'url(#cat-gray)')
+      .attr('pointer-events', 'none')
+      .text((d) => TODO_CATEGORIES.find(c => c.id === d.todo.category)?.icon ?? '');
 
     // ── Top icon zone: ✓ when done, ⚠ when deadline is close ─────────
     // Done checkmark (top-center)
@@ -469,5 +488,11 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
     // ── Static positioning (packSiblings already computed final positions) ──
     // Apply positions immediately — no force simulation needed
     node.attr('transform', (d) => `translate(${d.x},${d.y})`);
+
+    // ── Category filter dimming ────────────────────────────────────────
+    const dimmedIds = this.dimmedIds;
+    if (dimmedIds.size > 0) {
+      node.attr('opacity', (d) => dimmedIds.has(d.todo.id) ? 0.12 : 1);
+    }
   }
 }

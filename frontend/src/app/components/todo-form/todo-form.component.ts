@@ -13,7 +13,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Todo, CreateTodoDto, UpdateTodoDto } from '../../models/todo.model';
+import { Todo, CreateTodoDto, UpdateTodoDto, TODO_CATEGORIES } from '../../models/todo.model';
 
 @Component({
   selector: 'app-todo-form',
@@ -111,6 +111,26 @@ import { Todo, CreateTodoDto, UpdateTodoDto } from '../../models/todo.model';
             />
           </div>
 
+          <!-- Category -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Catégorie <span class="text-gray-500 text-xs">(optionnel)</span></label>
+            <div class="flex flex-wrap gap-2">
+              @for (cat of CATEGORIES; track cat.id) {
+                <button
+                  type="button"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors"
+                  [class]="form.get('category')?.value === cat.id
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-gray-800 border-gray-600 text-gray-400 hover:text-white hover:border-gray-500'"
+                  (click)="toggleCategory(cat.id)"
+                >
+                  <span>{{ cat.icon }}</span>
+                  <span>{{ cat.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
           <!-- Done toggle (edit mode only) -->
           <div *ngIf="todo" class="flex items-center gap-3 pt-1">
             <label class="relative inline-flex items-center cursor-pointer">
@@ -162,6 +182,7 @@ export class TodoFormComponent implements OnInit {
   @Output() duplicated = new EventEmitter<Todo>();
 
   private fb = inject(FormBuilder);
+  readonly CATEGORIES = TODO_CATEGORIES;
   form!: FormGroup;
   loading = false;
 
@@ -172,8 +193,14 @@ export class TodoFormComponent implements OnInit {
       effort: [this.todo?.effort ?? 3],
       priority: [this.todo?.priority ?? 3],
       deadline: [this.todo?.deadline ? this.todo.deadline.substring(0, 10) : ''],
+      category: [this.todo?.category ?? null],
       done: [this.todo?.done ?? false],
     });
+  }
+
+  toggleCategory(catId: string): void {
+    const current = this.form.get('category')?.value;
+    this.form.patchValue({ category: current === catId ? null : catId });
   }
 
   priorityTextClass(value: number): string {
@@ -196,6 +223,7 @@ export class TodoFormComponent implements OnInit {
       effort: Number(raw['effort']),
       priority: Number(raw['priority']),
       deadline: raw['deadline'] ? new Date(raw['deadline']).toISOString() : null,
+      category: raw['category'] ?? null,
       ...(this.todo ? { done: raw['done'] } : {}),
     };
     this.saved.emit({ dto, id: this.todo?.id });

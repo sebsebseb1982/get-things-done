@@ -1,0 +1,16 @@
+{
+  "todos": [
+    {
+      "id": "5a504fe0-4930-4532-af4c-34c259ea4131",
+      "title": "gsdfgsdfg",
+      "description": "",
+      "effort": 3,
+      "priority": 3,
+      "deadline": null,
+      "category": "voiture",
+      "done": false,
+      "createdAt": "2026-03-12T20:38:54.378Z",
+      "updatedAt": "2026-03-12T20:40:49.880Z"
+    }
+  ]
+}

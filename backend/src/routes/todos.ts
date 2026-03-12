@@ -44,7 +44,7 @@ router.post('/', (req: Request, res: Response) => {
     res.status(404).json({ error: 'Account not found' });
     return;
   }
-  const { title, description, effort, priority, deadline } = req.body as CreateTodoDto;
+  const { title, description, effort, priority, deadline, category } = req.body as CreateTodoDto;
   if (!title || typeof title !== 'string' || title.trim() === '') {
     res.status(400).json({ error: 'title is required' });
     return;
@@ -57,7 +57,7 @@ router.post('/', (req: Request, res: Response) => {
     res.status(400).json({ error: 'priority must be a number between 1 and 5' });
     return;
   }
-  const todo = todoService.createTodo(account, { title: title.trim(), description, effort, priority, deadline });
+  const todo = todoService.createTodo(account, { title: title.trim(), description, effort, priority, deadline, category });
   broadcastFn?.('todos:changed', { action: 'created', todo });
   res.status(201).json(todo);
 });
