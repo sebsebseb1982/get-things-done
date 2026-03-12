@@ -1,5 +1,6 @@
 # ---- Stage 1: Build Angular frontend ----
-FROM node:22-alpine AS frontend-build
+# Build on the native CI platform (amd64) to avoid QEMU crashes with Node 22+
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend-build
 
 WORKDIR /frontend
 COPY frontend/package*.json ./
@@ -9,7 +10,7 @@ RUN npm run build
 
 
 # ---- Stage 2: Compile TypeScript backend ----
-FROM node:22-alpine AS backend-build
+FROM --platform=$BUILDPLATFORM node:22-alpine AS backend-build
 
 WORKDIR /backend
 COPY backend/package*.json ./
