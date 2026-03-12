@@ -381,56 +381,11 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
       y: Math.max(d.r + 2, Math.min(height - d.r - 2, d.y ?? height / 2)),
     });
 
-    const renderLabel = (g: d3.Selection<SVGGElement, BubbleDatum, any, any>, d: BubbleDatum, hover: boolean) => {
+    const renderLabel = (g: d3.Selection<SVGGElement, BubbleDatum, any, any>, d: BubbleDatum) => {
       g.selectAll('.bubble-label').remove();
 
-      if (hover) {
-        // Hover state: smaller local font (visual font ≈ normal due to scale), no truncation, up to 4 lines
-        const fontSize = Math.min(10, Math.max(6.5, d.r / 4.8));
-        const maxW = d.r * 1.7;
-        const charsPerLine = Math.max(6, Math.floor(maxW / (fontSize * 0.58)));
-        const words = d.todo.title.split(' ');
-        const lines: string[] = [];
-        let cur = '';
-        for (const w of words) {
-          const test = cur ? `${cur} ${w}` : w;
-          if (test.length <= charsPerLine) { cur = test; }
-          else { if (cur) lines.push(cur); cur = w; }
-        }
-        if (cur) lines.push(cur);
-        const displayLines = lines.slice(0, 4);
-        const lineH = fontSize * 1.35;
-        const totalH = displayLines.length * lineH;
-        const startY = -(totalH / 2) + lineH * 0.5;
-
-        const textEl = g.append('text')
-          .attr('class', 'bubble-label')
-          .attr('text-anchor', 'middle')
-          .attr('dominant-baseline', 'central')
-          .attr('font-size', fontSize)
-          .attr('font-weight', '600')
-          .attr('fill', 'white')
-          .attr('pointer-events', 'none');
-
-        displayLines.forEach((line, i) => {
-          textEl.append('tspan')
-            .attr('x', 0)
-            .attr('y', startY + i * lineH)
-            .text(line);
-        });
-
-        // Always show E·P in hover state
-        g.append('text')
-          .attr('class', 'bubble-label')
-          .attr('text-anchor', 'middle')
-          .attr('y', d.r * 0.7)
-          .attr('font-size', 7.5)
-          .attr('fill', 'rgba(255,255,255,0.65)')
-          .attr('pointer-events', 'none')
-          .text(`E${d.todo.effort} · P${d.todo.priority}`);
-
-      } else {
-        // Normal state: truncated, original logic
+      {
+        // Label rendering — text scales naturally with the SVG group on hover
         const fontSize = Math.min(13, Math.max(7, d.r / 5.5));
         const words = d.todo.title.split(' ');
         const maxW = d.r * 1.6;
@@ -483,10 +438,10 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
 
     // ── Text zone: title + E·P below the icon zone ────────────────────
     node.each(function(d) {
-      renderLabel(d3.select<SVGGElement, BubbleDatum>(this), d, false);
+      renderLabel(d3.select<SVGGElement, BubbleDatum>(this), d);
     });
 
-    // ── Hover: scale up + show full text ──────────────────────────────
+    // ── Hover: scale up bubble (text scales naturally as part of the group) ───
     this.hoveredNodes.clear();
 
     node
@@ -500,7 +455,6 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
           .attr('transform', `translate(${x},${y}) scale(${hScale})`);
         g.selectAll('circle').transition('hover').duration(180)
           .style('filter', 'brightness(1.15)');
-        renderLabel(g, d, true);
       })
       .on('mouseleave', (event, d) => {
         this.hoveredNodes.delete(d);
@@ -510,7 +464,6 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
           .attr('transform', `translate(${x},${y}) scale(1)`);
         g.selectAll('circle').transition('hover').duration(180)
           .style('filter', null);
-        renderLabel(g, d, false);
       });
 
     // ── Static positioning (packSiblings already computed final positions) ──
