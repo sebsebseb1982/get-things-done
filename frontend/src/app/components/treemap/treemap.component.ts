@@ -368,7 +368,13 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       .text((d) => String(top3.get(d) ?? ''));
 
     // ── Helper: render title label (normal or hover state) ───────────
-    const HOVER_SCALE = 1.85;
+    // Hover scale is inversely proportional to radius:
+    // small bubbles zoom a lot (to reach MIN_HOVER_R), large bubbles barely move.
+    const MIN_HOVER_R = 60;  // target effective radius (px) for the smallest bubbles
+    const MIN_SCALE   = 1.04; // floor: even huge bubbles get a tiny nudge for feedback
+    const MAX_SCALE   = 2.4;  // ceiling
+    const hoverScaleFor = (r: number) =>
+      Math.min(MAX_SCALE, Math.max(MIN_SCALE, MIN_HOVER_R / r));
 
     const clampPos = (d: BubbleDatum) => ({
       x: Math.max(d.r + 2, Math.min(width - d.r - 2, d.x ?? width / 2)),
@@ -489,8 +495,9 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
         const g = d3.select<SVGGElement, BubbleDatum>(event.currentTarget as SVGGElement);
         g.raise();
         const { x, y } = clampPos(d);
+        const hScale = hoverScaleFor(d.r);
         g.transition('hover').duration(180)
-          .attr('transform', `translate(${x},${y}) scale(${HOVER_SCALE})`);
+          .attr('transform', `translate(${x},${y}) scale(${hScale})`);
         g.selectAll('circle').transition('hover').duration(180)
           .style('filter', 'brightness(1.15)');
         renderLabel(g, d, true);
