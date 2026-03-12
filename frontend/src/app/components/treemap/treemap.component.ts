@@ -145,6 +145,15 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       y: yTarget(t.priority * (6 - t.effort) + this.deadlineBonus(t.deadline, t.effort)),
     }));
 
+    // ── Top-3 priority ranking (non-done, highest score first) ──────────
+    const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32']; // gold, silver, bronze
+    const top3 = new Map<BubbleDatum, number>();
+    [...data]
+      .filter(d => !d.todo.done)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .forEach((d, i) => top3.set(d, i + 1));
+
     // ── Layout labels: two axis indicators ────────────────────────────
     const labelG = svg.append('g').attr('opacity', 0.25);
 
@@ -166,6 +175,16 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       .attr('x2', '0%').attr('y2', '100%');
     grad.append('stop').attr('offset', '0%').attr('stop-color', '#1f2937').attr('stop-opacity', 0.5);
     grad.append('stop').attr('offset', '100%').attr('stop-color', '#111827').attr('stop-opacity', 0.8);
+
+    // Glow filter for medal halos
+    const glowFilter = defs.append('filter')
+      .attr('id', 'medal-glow')
+      .attr('x', '-40%').attr('y', '-40%')
+      .attr('width', '180%').attr('height', '180%');
+    glowFilter.append('feGaussianBlur').attr('stdDeviation', '3.5').attr('result', 'coloredBlur');
+    const feMerge = glowFilter.append('feMerge');
+    feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     svg.insert('rect', ':first-child')
       .attr('width', width).attr('height', height)
@@ -199,6 +218,21 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
     // Native SVG tooltip — shows full title on hover
     node.append('title').text((d) => d.todo.title);
+
+    // ── Pulsing medal halo ring (rendered behind the main circle) ────────
+    const medalRings = node.filter(d => top3.has(d))
+      .append('circle')
+      .attr('r', (d) => d.r + 6)
+      .attr('fill', 'none')
+      .attr('stroke', (d) => medalColors[(top3.get(d) ?? 1) - 1])
+      .attr('stroke-width', 2.5)
+      .attr('filter', 'url(#medal-glow)')
+      .attr('pointer-events', 'none');
+    medalRings.append('animate')
+      .attr('attributeName', 'stroke-opacity')
+      .attr('values', '0.95;0.25;0.95')
+      .attr('dur', '2.4s')
+      .attr('repeatCount', 'indefinite');
 
     // Circle
     node.append('circle')
@@ -252,6 +286,27 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       .attr('fill', 'rgba(255,255,255,0.75)')
       .attr('pointer-events', 'none')
       .text('🗓');
+
+    // ── Medal rank badge for top-3 (top-right corner) ────────────────
+    const topRankNodes = node.filter(d => top3.has(d));
+    topRankNodes.append('circle')
+      .attr('cx', (d) => d.r * 0.62)
+      .attr('cy', (d) => -d.r * 0.62)
+      .attr('r', (d) => Math.max(9, d.r * 0.26))
+      .attr('fill', (d) => medalColors[(top3.get(d) ?? 1) - 1])
+      .attr('stroke', 'rgba(0,0,0,0.55)')
+      .attr('stroke-width', 1.5)
+      .attr('pointer-events', 'none');
+    topRankNodes.append('text')
+      .attr('x', (d) => d.r * 0.62)
+      .attr('y', (d) => -d.r * 0.62)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .attr('font-size', (d) => Math.max(8, d.r * 0.23))
+      .attr('font-weight', '800')
+      .attr('fill', '#1a1a1a')
+      .attr('pointer-events', 'none')
+      .text((d) => String(top3.get(d) ?? ''));
 
     // ── Helper: render title label (normal or hover state) ───────────
     const HOVER_SCALE = 1.85;
