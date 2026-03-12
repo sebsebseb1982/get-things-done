@@ -124,26 +124,59 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (this.todos.length === 0) return;
 
     // Radius scale: effort 1 → small, effort 5 → large
-    const rScale = d3.scaleSqrt().domain([1, 5]).range([
-      Math.min(width, height) * 0.0675,
-      Math.min(width, height) * 0.143,
+    const dim = Math.min(width, height);
+    const nominalRScale = d3.scaleSqrt().domain([1, 5]).range([
+      dim * 0.0675,
+      dim * 0.143,
     ]);
 
-    // Score: high priority + low effort + near deadline = top of screen
-    // max base = 5×5 = 25, max deadline bonus = 50 → max total = 75
-    const maxScore = 75;
-    const yTarget = d3.scaleLinear()
-      .domain([0, maxScore])
-      .range([height * 0.88, height * 0.1]);  // low score → bottom, high score → top
+    const cx = width / 2;
+    const cy = height / 2;
 
-    const data: BubbleDatum[] = this.todos.map((t, i) => ({
+    // ── Build data with scores ─────────────────────────────────────────
+    const data: BubbleDatum[] = this.todos.map((t) => ({
       todo: t,
-      r: rScale(t.effort),
-      score: t.priority * (6 - t.effort) + this.deadlineBonus(t.deadline, t.effort),
-      // initial position: spread horizontally, stacked toward target Y
-      x: (width / (this.todos.length + 1)) * (i + 1),
-      y: yTarget(t.priority * (6 - t.effort) + this.deadlineBonus(t.deadline, t.effort)),
+      r: nominalRScale(t.effort),
+      score: t.done
+        ? -1
+        : t.priority * (6 - t.effort) + this.deadlineBonus(t.deadline, t.effort),
     }));
+
+    // Sort by score descending: highest-score items are packed first (center)
+    data.sort((a, b) => b.score - a.score);
+
+    // ── Use d3.packSiblings for guaranteed non-overlapping packing ──────
+    // packSiblings uses the .r property and adds x, y coordinates.
+    // Items packed first (highest score) end up near center.
+    // Inflate radii by a margin so bubbles don't touch each other.
+    const BUBBLE_MARGIN = 4; // gap half-width in pre-scale px
+    for (const d of data) d.r += BUBBLE_MARGIN;
+    d3.packSiblings(data);
+
+    // ── Scale & translate to fit viewport ──────────────────────────────
+    // Find bounding box of packed circles (including inflated radii)
+    let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+    for (const d of data) {
+      bx0 = Math.min(bx0, (d.x ?? 0) - d.r);
+      by0 = Math.min(by0, (d.y ?? 0) - d.r);
+      bx1 = Math.max(bx1, (d.x ?? 0) + d.r);
+      by1 = Math.max(by1, (d.y ?? 0) + d.r);
+    }
+    const bw = bx1 - bx0;
+    const bh = by1 - by0;
+    const padding = 8;
+    const scale = Math.min(
+      (width - padding * 2) / bw,
+      (height - padding * 2) / bh,
+    );
+    const bcx = (bx0 + bx1) / 2;
+    const bcy = (by0 + by1) / 2;
+    for (const d of data) {
+      d.x = cx + ((d.x ?? 0) - bcx) * scale;
+      d.y = cy + ((d.y ?? 0) - bcy) * scale;
+      // Deflate the margin before scaling so the display radius is the original
+      d.r = (d.r - BUBBLE_MARGIN) * scale;
+    }
 
     // ── Top-3 priority ranking (non-done, highest score first) ──────────
     const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32']; // gold, silver, bronze
@@ -154,27 +187,14 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
       .slice(0, 3)
       .forEach((d, i) => top3.set(d, i + 1));
 
-    // ── Layout labels: two axis indicators ────────────────────────────
-    const labelG = svg.append('g').attr('opacity', 0.25);
-
-    // Vertical axis label
-    ['← Quick wins & urgent', '← Low priority'].forEach((txt, i) => {
-      labelG.append('text')
-        .attr('x', 10)
-        .attr('y', i === 0 ? 22 : height - 8)
-        .attr('font-size', 11)
-        .attr('fill', '#9ca3af')
-        .text(txt);
-    });
-
-    // Gradient background hint (top lighter → bottom darker)
+    // ── Radial gradient background (center brighter → edge darker) ────
     const defs = svg.append('defs');
-    const grad = defs.append('linearGradient')
+    const grad = defs.append('radialGradient')
       .attr('id', 'bg-grad')
-      .attr('x1', '0%').attr('y1', '0%')
-      .attr('x2', '0%').attr('y2', '100%');
-    grad.append('stop').attr('offset', '0%').attr('stop-color', '#1f2937').attr('stop-opacity', 0.5);
-    grad.append('stop').attr('offset', '100%').attr('stop-color', '#111827').attr('stop-opacity', 0.8);
+      .attr('cx', '50%').attr('cy', '50%')
+      .attr('r', '50%');
+    grad.append('stop').attr('offset', '0%').attr('stop-color', '#1f2937').attr('stop-opacity', 0.6);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', '#111827').attr('stop-opacity', 0.9);
 
     // Glow filter for medal halos
     const glowFilter = defs.append('filter')
@@ -189,6 +209,45 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
     svg.insert('rect', ':first-child')
       .attr('width', width).attr('height', height)
       .attr('fill', 'url(#bg-grad)');
+
+    // ── Concentric guide rings + radial labels ─────────────────────────
+    // Compute the max distance from center to any bubble edge for guide sizing
+    const guideRadius = Math.max(...data.map(d =>
+      Math.sqrt((d.x! - cx) ** 2 + (d.y! - cy) ** 2) + d.r
+    ));
+    const guideG = svg.append('g').attr('pointer-events', 'none');
+
+    [0.33, 0.66, 1.0].forEach((factor) => {
+      guideG.append('circle')
+        .attr('cx', cx)
+        .attr('cy', cy)
+        .attr('r', guideRadius * factor)
+        .attr('fill', 'none')
+        .attr('stroke', '#9ca3af')
+        .attr('stroke-width', 0.5)
+        .attr('stroke-dasharray', '4 6')
+        .attr('opacity', 0.12);
+    });
+
+    guideG.append('text')
+      .attr('x', cx)
+      .attr('y', cy - guideRadius * 0.04)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 10)
+      .attr('fill', '#9ca3af')
+      .attr('opacity', 0.3)
+      .attr('pointer-events', 'none')
+      .text('● Urgent');
+
+    guideG.append('text')
+      .attr('x', cx)
+      .attr('y', cy - guideRadius - 8)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 10)
+      .attr('fill', '#9ca3af')
+      .attr('opacity', 0.3)
+      .attr('pointer-events', 'none')
+      .text('Low priority');
 
     // ── Bubble groups ──────────────────────────────────────────────────
     const bubbleG = svg.append('g');
@@ -447,22 +506,8 @@ export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
         renderLabel(g, d, false);
       });
 
-    // ── Force simulation ───────────────────────────────────────────────
-    // x-strength scales UP with bubble count: more bubbles → stronger pull to center
-    const xStrength = Math.min(0.18, Math.max(0.05, data.length / 1000));
-    this.simulation = d3.forceSimulation(data)
-      .force('x', d3.forceX<BubbleDatum>(width / 2).strength(xStrength))
-      .force('y', d3.forceY<BubbleDatum>((d) => yTarget(d.score)).strength(0.40))
-      .force('collide', d3.forceCollide<BubbleDatum>((d) => d.r + 1.5).strength(0.9).iterations(4))
-      .alphaDecay(0.03)
-      .on('tick', () => {
-        node.filter((d) => !this.hoveredNodes.has(d))
-          .attr('transform', (d) => {
-          // Clamp within SVG bounds
-          const x = Math.max(d.r + 2, Math.min(width - d.r - 2, d.x ?? width / 2));
-          const y = Math.max(d.r + 2, Math.min(height - d.r - 2, d.y ?? height / 2));
-          return `translate(${x},${y})`;
-        });
-      });
+    // ── Static positioning (packSiblings already computed final positions) ──
+    // Apply positions immediately — no force simulation needed
+    node.attr('transform', (d) => `translate(${d.x},${d.y})`);
   }
 }

@@ -39,10 +39,10 @@
       "description": "",
       "effort": 3,
       "priority": 2,
-      "deadline": null,
+      "deadline": "2026-03-20T00:00:00.000Z",
       "done": false,
       "createdAt": "2026-03-09T21:35:59.593Z",
-      "updatedAt": "2026-03-09T21:35:59.593Z"
+      "updatedAt": "2026-03-12T12:41:48.656Z"
     },
     {
       "id": "ef0fb8ed-df9b-49c4-90c4-6749b038bf05",
@@ -50,10 +50,10 @@
       "description": "",
       "effort": 3,
       "priority": 3,
-      "deadline": null,
+      "deadline": "2026-03-26T00:00:00.000Z",
       "done": false,
       "createdAt": "2026-03-09T21:39:09.226Z",
-      "updatedAt": "2026-03-09T21:39:09.226Z"
+      "updatedAt": "2026-03-12T13:01:23.293Z"
     },
     {
       "id": "17131065-840b-4007-8c57-fbe4fa7faff2",
@@ -472,6 +472,39 @@
       "done": false,
       "createdAt": "2026-03-11T20:45:20.201Z",
       "updatedAt": "2026-03-12T07:27:38.845Z"
+    },
+    {
+      "id": "1020add9-934f-4642-b38b-fe2be3e4f48b",
+      "title": "fdghdfgh",
+      "description": "",
+      "effort": 1,
+      "priority": 5,
+      "deadline": null,
+      "done": false,
+      "createdAt": "2026-03-12T12:30:51.215Z",
+      "updatedAt": "2026-03-12T12:30:51.215Z"
+    },
+    {
+      "id": "38ee610c-0de5-414d-aad9-cb7c38085956",
+      "title": "qdsfg sdfg sdfg",
+      "description": "",
+      "effort": 5,
+      "priority": 1,
+      "deadline": null,
+      "done": false,
+      "createdAt": "2026-03-12T12:58:42.011Z",
+      "updatedAt": "2026-03-12T12:58:42.011Z"
+    },
+    {
+      "id": "73d2e723-24a8-467b-a9ba-fe3b0fba8d9e",
+      "title": "qr sdf qdsgf",
+      "description": "",
+      "effort": 5,
+      "priority": 5,
+      "deadline": "2026-03-03T00:00:00.000Z",
+      "done": false,
+      "createdAt": "2026-03-12T12:59:04.808Z",
+      "updatedAt": "2026-03-12T12:59:04.808Z"
     }
   ]
 }
