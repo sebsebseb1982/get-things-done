@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TodoService } from '../../services/todo.service';
 import { Todo, CreateTodoDto, UpdateTodoDto } from '../../models/todo.model';
-import { version } from '../../../../../package.json';
+import { version } from '../../../../package.json';
 import { BubbleChartComponent } from '../bubble-chart/bubble-chart.component';
 import { TodoFormComponent } from '../todo-form/todo-form.component';
 
