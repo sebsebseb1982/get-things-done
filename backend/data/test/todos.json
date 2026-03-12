@@ -1,0 +1,26 @@
+{
+  "todos": [
+    {
+      "id": "6947a466-702b-4835-88a3-ed44c4e2bde2",
+      "title": "ertert",
+      "description": "",
+      "effort": 3,
+      "priority": 3,
+      "deadline": null,
+      "done": false,
+      "createdAt": "2026-03-12T16:48:56.776Z",
+      "updatedAt": "2026-03-12T16:48:56.776Z"
+    },
+    {
+      "id": "06b18783-0f55-4122-b247-dad2721a3301",
+      "title": "qsdfqsdf",
+      "description": "",
+      "effort": 3,
+      "priority": 3,
+      "deadline": null,
+      "done": false,
+      "createdAt": "2026-03-12T16:49:08.744Z",
+      "updatedAt": "2026-03-12T16:49:08.744Z"
+    }
+  ]
+}

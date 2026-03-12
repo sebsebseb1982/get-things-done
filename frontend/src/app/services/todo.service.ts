@@ -6,7 +6,11 @@ import { Todo, CreateTodoDto, UpdateTodoDto } from '../models/todo.model';
 @Injectable({ providedIn: 'root' })
 export class TodoService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/todos';
+  private account = '';
+
+  private get baseUrl(): string {
+    return `/api/${this.account}/todos`;
+  }
 
   private readonly _reload$ = new Subject<void>();
   readonly reload$ = this._reload$.asObservable();
@@ -16,6 +20,11 @@ export class TodoService {
 
   constructor() {
     this.connectWebSocket();
+  }
+
+  /** Set the current account (called when route changes) */
+  setAccount(account: string): void {
+    this.account = account;
   }
 
   private connectWebSocket(): void {
