@@ -1,13 +1,13 @@
 # Get Things Done
 
-A todo management app with a D3.js treemap visualization — quick wins and urgent tasks always float to the top.
+A todo management app with a D3.js bubble chart visualization — quick wins and urgent tasks always float to the top.
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
 | Frontend | Angular 21 + TypeScript + TailwindCSS 4 |
-| Visualization | D3.js treemap |
+| Visualization | D3.js bubble chart |
 | Backend API | Express + TypeScript |
 | Persistence | JSON flat file |
 | Dev experience | ts-node-dev (backend) + ng serve with proxy (frontend) |
@@ -79,14 +79,14 @@ curl -X PATCH http://localhost:3000/api/todos/<id> \
   -d '{"done":true}'
 ```
 
-## Treemap logic
+## Bubble chart logic
 
-- **Size** of each cell = `effort` (1–5)
+- **Size** of each bubble = `effort` (1–5)
 - **Color** = priority: 🔴 P5 → 🟠 P4 → 🟡 P3 → 🟢 P2 → 💚 P1
-- **Position** = sorted by score `priority × (6 - effort)` — high priority + low effort (quick wins) appear top-left
+- **Position** = sorted by score `priority × (6 - effort)` — high priority + low effort (quick wins) float to the centre
 - **⚠** badge = deadline within 3 days
-- **Click** a cell → open edit form
-- **Double-click** a cell → toggle done
+- **Click** a bubble → open edit form
+- **Double-click** a bubble → toggle done
 
 ## Project structure
 
@@ -104,7 +104,7 @@ get-things-done/
 │   │   ├── models/todo.model.ts
 │   │   ├── services/todo.service.ts
 │   │   └── components/
-│   │       ├── treemap/          # D3.js treemap
+│   │       ├── bubble-chart/     # D3.js bubble chart
 │   │       └── todo-form/        # Create / edit modal
 │   └── proxy.conf.json           # Dev proxy → backend
 └── package.json                  # Root scripts (concurrently)

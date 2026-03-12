@@ -12,13 +12,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TodoService } from '../../services/todo.service';
 import { Todo, CreateTodoDto, UpdateTodoDto } from '../../models/todo.model';
 import { version } from '../../../../../package.json';
-import { TreemapComponent } from '../treemap/treemap.component';
+import { BubbleChartComponent } from '../bubble-chart/bubble-chart.component';
 import { TodoFormComponent } from '../todo-form/todo-form.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TreemapComponent, TodoFormComponent],
+  imports: [CommonModule, RouterLink, BubbleChartComponent, TodoFormComponent],
   template: `
     <div class="flex flex-col h-screen bg-gray-950 overflow-hidden">
 
@@ -74,14 +74,14 @@ import { TodoFormComponent } from '../todo-form/todo-form.component';
         Size = effort &nbsp;·&nbsp; Color = priority &nbsp;·&nbsp; Centre = urgent · Bord = faible priorité &nbsp;·&nbsp; ⚠ = deadline in &lt;3 days
       </div>
 
-      <!-- Treemap area -->
+      <!-- Bubble chart area -->
       <main class="flex-1 overflow-hidden p-3">
-        <app-treemap
+        <app-bubble-chart
           [todos]="visibleTodos"
           (editTodo)="openEditForm($event)"
           (toggleDone)="onToggleDone($event)"
           class="block w-full h-full"
-        ></app-treemap>
+        ></app-bubble-chart>
       </main>
 
       <!-- Error toast -->

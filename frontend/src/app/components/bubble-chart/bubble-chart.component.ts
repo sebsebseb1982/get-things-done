@@ -23,7 +23,7 @@ interface BubbleDatum {
 }
 
 @Component({
-  selector: 'app-treemap',
+  selector: 'app-bubble-chart',
   standalone: true,
   template: `
     <div class="relative w-full h-full">
@@ -41,7 +41,7 @@ interface BubbleDatum {
   `],
   imports: [],
 })
-export class TreemapComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() todos: Todo[] = [];
   @Output() editTodo = new EventEmitter<Todo>();
   @Output() toggleDone = new EventEmitter<Todo>();

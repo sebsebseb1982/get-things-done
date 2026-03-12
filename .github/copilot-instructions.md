@@ -39,7 +39,7 @@ Angular (4200) — /api/* → proxy → Express (3000) → backend/data/todos.js
 ## D3 Integration
 
 - All D3 event handlers that touch Angular state must call `this.zone.run(() => { ... })` to re-enter change detection.
-- The treemap/bubble component guards re-renders with `JSON.stringify` comparison in `ngOnChanges` — avoid expensive re-renders on every keystroke.
+- The bubble chart component guards re-renders with `JSON.stringify` comparison in `ngOnChanges` — avoid expensive re-renders on every keystroke.
 
 ## Todo Model
 
