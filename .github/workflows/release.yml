@@ -1,0 +1,102 @@
+name: Release and Publish
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: get-things-done
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, 'chore(release):') }}
+    outputs:
+      new_version: ${{ steps.tag_version.outputs.new_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version bump from Conventional Commits
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v13
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: v
+          default_bump: false
+          release_branches: master
+          dry_run: true
+
+      - name: Configure git
+        if: steps.tag_version.outputs.new_version != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump package.json versions
+        if: steps.tag_version.outputs.new_version != ''
+        run: |
+          NEW_VERSION="${{ steps.tag_version.outputs.new_version }}"
+          npm version "$NEW_VERSION" --no-git-tag-version --allow-same-version
+          node -e "
+            const fs = require('fs');
+            ['backend', 'frontend'].forEach(p => {
+              const f = p + '/package.json';
+              const j = JSON.parse(fs.readFileSync(f));
+              j.version = '$NEW_VERSION';
+              fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
+            });
+          "
+
+      - name: Commit and tag release
+        if: steps.tag_version.outputs.new_version != ''
+        run: |
+          NEW_VERSION="${{ steps.tag_version.outputs.new_version }}"
+          git add package.json package-lock.json backend/package.json frontend/package.json
+          git commit -m "chore(release): v${NEW_VERSION}"
+          git tag -a "v${NEW_VERSION}" -m "v${NEW_VERSION}"
+          git push origin HEAD:master
+          git push origin "v${NEW_VERSION}"
+
+  docker:
+    needs: release
+    if: needs.release.outputs.new_version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release.outputs.new_version }}
+
+      # QEMU enables cross-compilation for ARM (Synology, QNAP, Raspberry Pi, etc.)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:v${{ needs.release.outputs.new_version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
