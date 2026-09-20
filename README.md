@@ -79,6 +79,25 @@ curl -X PATCH http://localhost:3000/api/todos/<id> \
   -d '{"done":true}'
 ```
 
+## Deadline notifications (Pushover)
+
+Todos with a `deadline` get up to 3 Pushover reminders as the deadline approaches:
+
+1. **First reminder** — plain notification, no acknowledgement required.
+2. **Second reminder** — emergency priority, requires acknowledgement (Pushover retries until acked or it expires).
+3. **Final reminder** — same as above, closest to the deadline.
+
+The reminders are spaced out based on the todo's `effort` (1–5): higher effort means the lead time before the deadline is longer, so a 5-effort task starts getting reminded 5 days out while a 1-effort task starts 1 day out. The three stages fire at 100%, 40% and 10% of that lead time before the deadline. A background check runs every 15 minutes; state is tracked per todo so each stage is only sent once (it resets if the deadline or effort changes, or a done todo is reopened).
+
+Requires these environment variables (passed to the Docker container, e.g. `docker run -e PUSHOVER_TOKEN=... -e PUSHOVER_USER=...`):
+
+| Variable | Description |
+|---|---|
+| `PUSHOVER_TOKEN` | Pushover application API token |
+| `PUSHOVER_USER` | Pushover user/group key |
+
+If either is missing, reminders are skipped with a warning logged — the rest of the app is unaffected.
+
 ## Bubble chart logic
 
 - **Size** of each bubble = `effort` (1–5)

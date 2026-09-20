@@ -18,7 +18,9 @@ function readData(account: string): Todo[] {
   }
   const raw = fs.readFileSync(file, 'utf-8');
   const parsed = JSON.parse(raw);
-  return parsed.todos as Todo[];
+  const todos = parsed.todos as Todo[];
+  // Backfill for todos persisted before notifiedStages existed.
+  return todos.map((t) => (t.notifiedStages ? t : { ...t, notifiedStages: [] }));
 }
 
 function writeData(account: string, todos: Todo[]): void {
@@ -73,6 +75,7 @@ export function createTodo(account: string, dto: CreateTodoDto): Todo {
     done: false,
     createdAt: now,
     updatedAt: now,
+    notifiedStages: [],
   };
   todos.push(newTodo);
   writeData(account, todos);
@@ -83,16 +86,35 @@ export function updateTodo(account: string, id: string, dto: UpdateTodoDto): Tod
   const todos = readData(account);
   const idx = todos.findIndex((t) => t.id === id);
   if (idx === -1) return null;
+  const previous = todos[idx];
+  // Re-arm deadline reminders whenever the deadline/effort schedule they were
+  // computed from changes, or a completed todo gets reopened.
+  const scheduleChanged =
+    (dto.deadline !== undefined && dto.deadline !== previous.deadline) ||
+    (dto.effort !== undefined && dto.effort !== previous.effort) ||
+    (dto.done === false && previous.done === true);
   const updated: Todo = {
-    ...todos[idx],
+    ...previous,
     ...dto,
     id,
-    createdAt: todos[idx].createdAt,
+    createdAt: previous.createdAt,
     updatedAt: new Date().toISOString(),
+    notifiedStages: scheduleChanged ? [] : previous.notifiedStages,
   };
   todos[idx] = updated;
   writeData(account, todos);
   return updated;
+}
+
+/** Record that a deadline-reminder stage was sent, so it isn't sent again. */
+export function markNotified(account: string, id: string, stage: number): void {
+  const todos = readData(account);
+  const idx = todos.findIndex((t) => t.id === id);
+  if (idx === -1) return;
+  const current = todos[idx].notifiedStages ?? [];
+  if (current.includes(stage)) return;
+  todos[idx] = { ...todos[idx], notifiedStages: [...current, stage].sort((a, b) => a - b) };
+  writeData(account, todos);
 }
 
 export function deleteTodo(account: string, id: string): boolean {

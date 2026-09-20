@@ -23,7 +23,8 @@ export interface Todo {
   done: boolean;
   createdAt: string;
   updatedAt: string;
+  notifiedStages?: number[]; // internal: deadline-reminder stages already sent via Pushover
 }
 
-export type CreateTodoDto = Omit<Todo, 'id' | 'done' | 'createdAt' | 'updatedAt'>;
-export type UpdateTodoDto = Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>>;
+export type CreateTodoDto = Omit<Todo, 'id' | 'done' | 'createdAt' | 'updatedAt' | 'notifiedStages'>;
+export type UpdateTodoDto = Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt' | 'notifiedStages'>>;

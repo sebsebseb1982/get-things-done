@@ -6,6 +6,7 @@ import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import todosRouter, { setBroadcast } from './routes/todos';
 import * as todoService from './services/todo.service';
+import { startDeadlineNotifier } from './services/deadline-notifier.service';
 
 const app = express();
 const PORT = process.env['PORT'] ?? 3000;
@@ -86,3 +87,5 @@ setBroadcast(broadcast);
 server.listen(PORT, () => {
   console.log(`[backend] Server running on http://localhost:${PORT}`);
 });
+
+startDeadlineNotifier();

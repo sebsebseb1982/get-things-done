@@ -9,7 +9,8 @@ export interface Todo {
   done: boolean;
   createdAt: string;   // ISO 8601
   updatedAt: string;   // ISO 8601
+  notifiedStages: number[]; // indices of deadline-reminder stages already sent via Pushover
 }
 
-export type CreateTodoDto = Omit<Todo, 'id' | 'done' | 'createdAt' | 'updatedAt'>;
-export type UpdateTodoDto = Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>>;
+export type CreateTodoDto = Omit<Todo, 'id' | 'done' | 'createdAt' | 'updatedAt' | 'notifiedStages'>;
+export type UpdateTodoDto = Partial<Omit<Todo, 'id' | 'createdAt' | 'updatedAt' | 'notifiedStages'>>;

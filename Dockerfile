@@ -45,4 +45,10 @@ ENV NODE_ENV=production
 # Override to restrict CORS to a specific origin, e.g. http://nas:3000
 ENV CORS_ORIGIN=*
 
+# Pushover credentials for deadline reminder notifications — required for the
+# feature to be active. Pass at runtime, e.g.:
+#   docker run -e PUSHOVER_TOKEN=xxxx -e PUSHOVER_USER=yyyy ...
+ENV PUSHOVER_TOKEN=""
+ENV PUSHOVER_USER=""
+
 CMD ["node", "dist/index.js"]
