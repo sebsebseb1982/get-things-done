@@ -14,8 +14,8 @@ const STAGES: ReadonlyArray<{ fraction: number; priority: 0 | 2 }> = [
 ];
 
 // How far in advance of the deadline the first reminder fires, per effort point.
-// effort 1 -> 1 day of lead time, effort 5 -> 5 days.
-const HOURS_PER_EFFORT_POINT = 24;
+// effort 1 -> 6 days of lead time, effort 5 -> 30 days (one month).
+const HOURS_PER_EFFORT_POINT = 6 * 24;
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 

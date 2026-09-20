@@ -87,7 +87,7 @@ Todos with a `deadline` get up to 3 Pushover reminders as the deadline approache
 2. **Second reminder** — emergency priority, requires acknowledgement (Pushover retries until acked or it expires).
 3. **Final reminder** — same as above, closest to the deadline.
 
-The reminders are spaced out based on the todo's `effort` (1–5): higher effort means the lead time before the deadline is longer, so a 5-effort task starts getting reminded 5 days out while a 1-effort task starts 1 day out. The three stages fire at 100%, 40% and 10% of that lead time before the deadline. A background check runs every 15 minutes; state is tracked per todo so each stage is only sent once (it resets if the deadline or effort changes, or a done todo is reopened).
+The reminders are spaced out based on the todo's `effort` (1–5): higher effort means the lead time before the deadline is longer (6 days per effort point), so a 5-effort task starts getting reminded 30 days out while a 1-effort task starts 6 days out. The three stages fire at 100%, 40% and 10% of that lead time before the deadline. A background check runs every 15 minutes; state is tracked per todo so each stage is only sent once (it resets if the deadline or effort changes, or a done todo is reopened).
 
 Requires these environment variables (passed to the Docker container, e.g. `docker run -e PUSHOVER_TOKEN=... -e PUSHOVER_USER=...`):
 
