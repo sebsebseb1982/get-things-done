@@ -39,7 +39,7 @@ import { TodoFormComponent } from '../todo-form/todo-form.component';
             <span class="w-3 h-3 rounded-sm bg-orange-500 inline-block"></span>P4
             <span class="w-3 h-3 rounded-sm bg-yellow-500 inline-block"></span>P3
             <span class="w-3 h-3 rounded-sm bg-lime-500 inline-block"></span>P2
-            <span class="w-3 h-3 rounded-sm bg-green-500 inline-block"></span>P1
+            <span class="w-3 h-3 rounded-sm bg-emerald-600 inline-block"></span>P1
           </div>
 
           <!-- Settings menu -->

@@ -98,6 +98,13 @@ Requires these environment variables (passed to the Docker container, e.g. `dock
 
 If either is missing, reminders are skipped with a warning logged — the rest of the app is unaffected.
 
+Reminders are never sent during the night: nothing is pushed before **9:00** (Europe/Paris). A reminder that comes due overnight is sent at the first check after 9:00. Optional variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `NOTIFICATION_START_HOUR` | `9` | Hour of the day (0–23) from which reminders may be sent |
+| `NOTIFICATION_TIMEZONE` | `Europe/Paris` | IANA timezone used to evaluate that hour |
+
 ## Bubble chart logic
 
 - **Size** of each bubble = `effort` (1–5)

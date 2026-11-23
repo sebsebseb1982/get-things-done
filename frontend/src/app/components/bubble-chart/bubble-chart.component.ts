@@ -168,12 +168,16 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
 
   private priorityColor(priority: number, done: boolean): string {
     if (done) return '#374151';
+    // Red → orange → yellow → green ramp. P1 is a deep emerald rather than
+    // plain green-500: at the same lightness as lime (P2) the two read as
+    // near-identical "shades of green" — pushing P1 both darker and further
+    // round the hue wheel keeps every step distinct.
     const colors: Record<number, string> = {
       5: '#ef4444',
       4: '#f97316',
       3: '#eab308',
       2: '#84cc16',
-      1: '#22c55e',
+      1: '#059669',
     };
     return colors[priority] ?? '#6b7280';
   }
@@ -380,17 +384,45 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
     }
 
     // ── Text zone: title + E·P below the icon zone ────────────────────
-    const fontSize = Math.min(13, Math.max(7, d.r / 5.5));
+    const textColor = 'white';
+    const fontSize = Math.min(18, Math.max(7, d.r / 4.5));
     const words = d.todo.title.split(' ');
-    const maxW = d.r * 1.6;
+    const maxW = d.r * 1.7;
     const hasEP = d.r > 50;
-    const effortCap: Record<number, number> = { 1: 16, 2: 16, 3: 18, 4: 22, 5: 24 };
-    const charsPerLine = Math.min(
-      effortCap[d.todo.effort] ?? 20,
-      Math.max(3, Math.floor(maxW / (fontSize * 0.6))),
-    );
-    const truncate = (text: string, max: number) =>
-      text.length > max ? text.substring(0, max - 1) + '…' : text;
+    const maxLines = d.r > 85 ? 3 : d.r > 40 ? 2 : 1;
+    const maxChars = Math.max(3, Math.floor(maxW / (fontSize * 0.6)));
+    const fits = (text: string) => text.length <= maxChars;
+    const hardTruncate = (text: string) =>
+      fits(text) ? text : text.substring(0, maxChars - 1) + '…';
+
+    // Greedily fill each line with whole words. A word too wide to ever fit
+    // becomes its own truncated line and ends the whole title there — this
+    // way an ellipsis can only ever land on the single, actual last line,
+    // never on an earlier one too.
+    const lines: string[] = [];
+    let wi = 0;
+    while (wi < words.length && lines.length < maxLines) {
+      if (!fits(words[wi])) {
+        lines.push(hardTruncate(words[wi]));
+        wi++;
+        break;
+      }
+      let line = words[wi];
+      wi++;
+      while (wi < words.length) {
+        const candidate = `${line} ${words[wi]}`;
+        if (!fits(candidate)) break;
+        line = candidate;
+        wi++;
+      }
+      lines.push(line);
+    }
+    if (wi < words.length && lines.length > 0) {
+      const lastIdx = lines.length - 1;
+      let last = lines[lastIdx];
+      while (last.length > 0 && !fits(`${last}…`)) last = last.slice(0, -1);
+      lines[lastIdx] = `${last.trimEnd()}…`;
+    }
 
     const textEl = g.append('text')
       .attr('class', 'bubble-label')
@@ -398,22 +430,17 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
       .attr('dominant-baseline', 'central')
       .attr('font-size', fontSize)
       .attr('font-weight', '600')
-      .attr('fill', 'white')
+      .attr('fill', textColor)
       .attr('pointer-events', 'none');
 
-    let line1 = '', line2 = '', line1Full = false;
-    words.forEach((w) => {
-      if (!line1Full && (line1 + ' ' + w).trim().length * (fontSize * 0.6) < maxW) {
-        line1 = (line1 + ' ' + w).trim();
-      } else { line1Full = true; line2 = (line2 + ' ' + w).trim(); }
-    });
-
-    if (line2) {
-      const y1 = hasEP ? d.r * 0.0 : d.r * 0.1;
-      textEl.append('tspan').attr('x', 0).attr('y', y1).text(truncate(line1, charsPerLine));
-      textEl.append('tspan').attr('x', 0).attr('dy', '1.3em').text(truncate(line2, charsPerLine));
+    if (lines.length > 1) {
+      const y0 = hasEP ? -((lines.length - 1) * 0.65 * fontSize) : d.r * 0.1 - ((lines.length - 1) * 0.65 * fontSize);
+      lines.forEach((line, idx) => {
+        const tspan = textEl.append('tspan').attr('x', 0).text(line);
+        if (idx === 0) tspan.attr('y', y0); else tspan.attr('dy', '1.3em');
+      });
     } else {
-      textEl.attr('y', hasEP ? d.r * 0.1 : d.r * 0.08).text(truncate(d.todo.title, charsPerLine));
+      textEl.attr('y', hasEP ? d.r * 0.1 : d.r * 0.08).text(lines[0] ?? '');
     }
 
     // E·P indicator (only for larger bubbles)
@@ -423,7 +450,7 @@ export class BubbleChartComponent implements AfterViewInit, OnChanges, OnDestroy
         .attr('text-anchor', 'middle')
         .attr('y', d.r * 0.62)
         .attr('font-size', 9)
-        .attr('fill', 'rgba(255,255,255,0.6)')
+        .attr('fill', 'rgba(255,255,255,0.75)')
         .attr('pointer-events', 'none')
         .text(`E${d.todo.effort} · P${d.todo.priority}`);
     }

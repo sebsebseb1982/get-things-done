@@ -22,6 +22,25 @@ const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 // Stop reminding about a deadline that's this far in the past (server downtime, etc).
 const MAX_OVERDUE_MS = 24 * 60 * 60 * 1000;
 
+// Reminders are held back until this hour of the day (local to NOTIFICATION_TIMEZONE),
+// so nothing buzzes overnight. Anything that came due in the meantime is sent on the
+// first check at/after that hour.
+const NOTIFICATION_START_HOUR = Number(process.env['NOTIFICATION_START_HOUR'] ?? 9);
+const NOTIFICATION_TIMEZONE = process.env['NOTIFICATION_TIMEZONE'] ?? 'Europe/Paris';
+
+function currentHour(now: Date): number {
+  const hour = new Intl.DateTimeFormat('en-GB', {
+    hour: 'numeric',
+    hourCycle: 'h23',
+    timeZone: NOTIFICATION_TIMEZONE,
+  }).format(now);
+  return Number(hour);
+}
+
+function isWithinNotificationHours(now: Date): boolean {
+  return currentHour(now) >= NOTIFICATION_START_HOUR;
+}
+
 function leadTimeMs(effort: number): number {
   return effort * HOURS_PER_EFFORT_POINT * 60 * 60 * 1000;
 }
@@ -53,6 +72,8 @@ async function notifyStage(account: string, todo: Todo, stageIndex: number, dead
 }
 
 export async function checkDeadlines(): Promise<void> {
+  if (!isWithinNotificationHours(new Date())) return;
+
   const now = Date.now();
   for (const account of todoService.listAccounts()) {
     const todos = todoService.getAllTodos(account, { done: false });
